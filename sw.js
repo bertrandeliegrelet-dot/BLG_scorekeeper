@@ -1,4 +1,4 @@
-const CACHE="blg-scorekeeper-v1";
+const CACHE="blg-scorekeeper-v1.1";
 const FILES=["./","./index.html","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES))));
 self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));
