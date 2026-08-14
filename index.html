@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="description" content="BLG scorekeeper — compteur de points pour Basic Land Game">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>BLG scorekeeper</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f3f4f6;color:#111827}
+header{background:#111827;color:#fff;padding:18px 14px;text-align:center;position:sticky;top:0;z-index:5}h1{margin:0;font-size:25px}.sub{font-size:13px;opacity:.75}
+main{max-width:720px;margin:auto;padding:12px}.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px #0001}
+h2{font-size:18px;margin:0 0 10px}label{font-weight:700;display:block;margin-bottom:6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:700;background:#111827;color:#fff}
+button.secondary{background:#e5e7eb;color:#111827}button.green{background:#15803d;color:#fff}button.red{background:#b91c1c}
+input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:16px}.names{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hidden{display:none}.center{text-align:center}.progress{font-size:28px;font-weight:800}.small{font-size:13px;color:#6b7280}
+#score{display:grid;gap:6px}.row{display:grid;grid-template-columns:44px repeat(5,1fr);gap:5px;align-items:center}
+.head{text-align:center;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.point{text-align:center;font-size:22px}
+.mark{height:42px;padding:0;background:#e5e7eb;color:#6b7280}.mark.on{background:#16a34a;color:#fff}.log{max-height:220px;overflow:auto}.log div{padding:8px 0;border-bottom:1px solid #eee}
+.winner{background:#dcfce7;border:2px solid #16a34a}
+</style>
+</head>
+<body>
+<header><h1>BLG scorekeeper</h1><div class="sub">Basic Land Game · 2 à 5 joueurs</div></header>
+<main>
+<section id="setup" class="card">
+<h2>Nouvelle partie</h2><label>Nombre de joueurs</label><div id="countBtns" class="actions"></div>
+<div id="nameInputs" class="names" style="margin-top:12px"></div>
+<button style="width:100%;margin-top:12px" onclick="startGame()">Commencer le match</button>
+</section>
+<section id="game" class="hidden">
+<div class="card center"><div id="round" class="progress"></div><div id="status" class="small"></div></div>
+<div class="card"><div id="score"></div></div>
+<div class="card"><h2>Gagnant de la manche</h2><div id="winnerBtns" class="actions"></div>
+<div id="method" class="hidden" style="margin-top:12px"><h2>Type de victoire</h2><div id="methodBtns" class="actions"></div></div>
+<div id="domainChoice" class="hidden" style="margin-top:12px"><h2>Point à attribuer avec le Domain</h2><div id="domainBtns" class="actions"></div></div></div>
+<div class="card"><div class="actions"><button class="secondary" onclick="undo()">↩ Annuler</button><button class="red" onclick="resetGame()">Nouvelle partie</button></div></div>
+<div class="card"><h2>Historique des manches</h2><div id="log" class="log"></div></div>
+</section>
+</main>
+<script>
+const colors=[["⚪","Blanc"],["🔵","Bleu"],["⚫","Noir"],["🔴","Rouge"],["🟢","Vert"],["🩶","Gris"]];
+let n=2,names=[],points=[],round=1,history=[],events=[];
+function setup(){let c=document.getElementById("countBtns");c.innerHTML="";for(let i=2;i<=5;i++){let b=document.createElement("button");b.textContent=i+" joueurs";b.className=i===n?"":"secondary";b.onclick=()=>{n=i;setup()};c.appendChild(b)}let ni=document.getElementById("nameInputs");ni.innerHTML="";for(let i=0;i<n;i++){let x=document.createElement("input");x.id="p"+i;x.placeholder="Joueur "+(i+1);x.value=names[i]||"Joueur "+(i+1);ni.appendChild(x)}}
+function startGame(){names=Array.from({length:n},(_,i)=>document.getElementById("p"+i).value.trim()||"Joueur "+(i+1));points=Array.from({length:n},()=>Array(6).fill(false));round=1;history=[];events=[];document.getElementById("setup").classList.add("hidden");document.getElementById("game").classList.remove("hidden");render()}
+function snap(){history.push(JSON.stringify({points,round,events}))}
+function render(){document.getElementById("round").textContent="Manche "+round;document.getElementById("status").textContent="6 points à obtenir · le gris uniquement par Domain";let h='<div class="row"><div></div>'+names.map(x=>'<div class="head">'+esc(x)+'</div>').join("")+'</div>';colors.forEach((c,ci)=>{h+='<div class="row"><div class="point">'+c[0]+'</div>'+names.map((_,pi)=>'<button class="mark '+(points[pi][ci]?'on':'')+'" onclick="info()">'+(points[pi][ci]?'✓':'—')+'</button>').join("")+'</div>'});h+='<div class="row"><div></div>'+points.map(p=>'<div class="head">'+p.filter(Boolean).length+'/6</div>').join("")+'</div>';document.getElementById("score").innerHTML=h;let wb=document.getElementById("winnerBtns");wb.innerHTML="";names.forEach((x,i)=>{let b=document.createElement("button");b.textContent=x;b.onclick=()=>chooseMethod(i);wb.appendChild(b)});document.getElementById("method").classList.add("hidden");document.getElementById("domainChoice").classList.add("hidden");document.getElementById("log").innerHTML=events.map(e=>"<div>"+e+"</div>").reverse().join("")}
+function chooseMethod(i){document.getElementById("domainChoice").classList.add("hidden");document.getElementById("method").classList.remove("hidden");let m=document.getElementById("methodBtns");m.innerHTML="";let d=document.createElement("button");d.className="green";d.textContent="🏆 Domain";d.onclick=()=>chooseDomain(i);m.appendChild(d);for(let ci=0;ci<5;ci++){let b=document.createElement("button");b.className="secondary";b.textContent=colors[ci][0]+" 5 "+colors[ci][1]+"s";b.onclick=()=>award(i,ci,"5 "+colors[ci][1]+"s");m.appendChild(b)}}
+function chooseDomain(i){document.getElementById("method").classList.add("hidden");document.getElementById("domainChoice").classList.remove("hidden");let d=document.getElementById("domainBtns");d.innerHTML="";colors.forEach((c,ci)=>{if(!points[i][ci]){let b=document.createElement("button");b.textContent=c[0]+" "+c[1];b.onclick=()=>award(i,ci,"Domain");d.appendChild(b)}})}
+function award(i,ci,method){if(points[i][ci])return;snap();points[i][ci]=true;events.push("Manche "+round+" : <b>"+esc(names[i])+"</b> gagne avec <b>"+method+"</b> → "+colors[ci][0]+" "+colors[ci][1]+".");if(points[i].every(Boolean)){render();document.getElementById("status").innerHTML="<b>"+esc(names[i])+" remporte le match ! 🏆</b>";document.getElementById("status").parentElement.classList.add("winner");return}round++;render()}
+function info(){alert("Les points sont attribués après une victoire de manche.")}
+function undo(){if(!history.length)return;let s=JSON.parse(history.pop());points=s.points;round=s.round;events=s.events;render()}
+function resetGame(){if(confirm("Recommencer un nouveau match ?")){document.getElementById("game").classList.add("hidden");document.getElementById("setup").classList.remove("hidden");setup()}}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+setup();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+</script>
+</body></html>

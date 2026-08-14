@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="110" fill="#111827"/>
+<g stroke="#111827" stroke-width="10">
+<path fill="#f4d35e" d="M256 35l91 53v105l-91 53-91-53V88z"/>
+<path fill="#1982c4" d="M347 88l91 53v105l-91 53-91-53V141z" transform="translate(0,0)"/>
+<path fill="#202124" d="M438 246l39 23v105l-91 53-91-53V269l91-53z" transform="translate(-91,0)"/>
+<path fill="#d94b25" d="M347 357l91 53v105l-91 53-91-53V410z" transform="translate(-91,-56)"/>
+<path fill="#43a047" d="M165 357l91 53v105l-91 53-91-53V410z" transform="translate(0,-56)"/>
+<path fill="#b8b2a3" d="M74 246l91-53 91 53v105l-91 53-91-53z" transform="translate(0,0)"/>
+</g>
+<circle cx="256" cy="256" r="108" fill="#111827" stroke="#fff" stroke-width="8"/>
+<text x="256" y="276" text-anchor="middle" font-family="Arial,sans-serif" font-size="86" font-weight="800" fill="#fff">BLG</text>
+</svg>
